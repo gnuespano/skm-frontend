@@ -1,33 +1,27 @@
 import { useEffect, useState } from "react";
 
-type StatusResponse = {
-  status: string;
-  timestamp: string;
-};
-
 function App() {
-  const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [status, setStatus] = useState("carregando...");
+  const [timestamp, setTimestamp] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStatus() {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/status`
+          import.meta.env.VITE_API_URL + "/status"
         );
 
-        if (!res.ok) {
-          throw new Error("Backend não respondeu");
-        }
+        if (!res.ok) throw new Error("Backend offline");
 
-        const data: StatusResponse = await res.json();
-        setStatus(data);
+        const data = await res.json();
+
+        setStatus(data.status);
+        setTimestamp(data.timestamp);
       } catch (err) {
-        console.error("Erro ao conectar com o backend", err);
-        setError("Backend offline");
-      } finally {
-        setLoading(false);
+        console.error(err);
+        setError("Erro ao conectar com o backend");
+        setStatus("offline");
       }
     }
 
@@ -36,19 +30,15 @@ function App() {
 
   return (
     <div style={{ padding: 24, fontFamily: "Arial" }}>
-      <h1>SKM — Painel Local</h1>
-
-      {loading && <p>Carregando...</p>}
+      <h1>SKM — Painel Online</h1>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {status && !error && (
-        <div>
-          <p>
-            Status: <b>{status.status}</b>
-          </p>
-          <p>Timestamp: {status.timestamp}</p>
-        </div>
+      {!error && (
+        <>
+          <p>Status: <b>{status}</b></p>
+          {timestamp && <p>Timestamp: {timestamp}</p>}
+        </>
       )}
     </div>
   );
